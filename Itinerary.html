@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>TravelLoop — Itinerary Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--ink:#0d1b2a;--sky:#0ea5e9;--gold:#f59e0b;--mist:#f0f9ff;--card:#ffffff;--border:#e0f2fe;--radius:20px;--shadow:0 8px 40px rgba(14,165,233,.12);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Outfit',sans-serif;background:var(--mist);color:var(--ink);transition:background .3s,color .3s;}
+    body.dark{--mist:#060e1a;--card:#0d1b2a;--ink:#e2e8f0;--border:#1e3a5f;}
+    body.dark nav{background:#060e1a!important;border-color:#1e3a5f!important;}
+    body.dark .form-wrap{background:#0d1b2a;border-color:#1e3a5f;}
+    body.dark input{background:#0d1b2a;color:#e2e8f0;border-color:#1e3a5f;}
+    body.dark .itin-item{background:#0d1b2a;border-color:#1e3a5f;}
+    body.dark .day-group-title{color:#7dd3fc;}
+    body.dark footer{background:#040b14;}
+    /* LOADER */
+    #loader{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0d1b2a,#0c4a6e);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .7s;}
+    #loader.hide{opacity:0;pointer-events:none;}
+    .ring{width:64px;height:64px;border:4px solid rgba(255,255,255,.15);border-top-color:#f59e0b;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:20px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .loader-title{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:700;color:#fff;}
+    .loader-sub{color:#7dd3fc;margin-top:8px;font-size:.95rem;}
+    /* NAV */
+    nav{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid var(--border);padding:0 48px;height:68px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 20px rgba(14,165,233,.07);}
+    .nav-brand{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:700;color:var(--sky);text-decoration:none;}
+    .nav-links{display:flex;align-items:center;gap:6px;}
+    .nav-links a{color:var(--ink);text-decoration:none;padding:8px 14px;border-radius:10px;font-size:.92rem;font-weight:500;transition:background .2s,color .2s;}
+    .nav-links a:hover{background:var(--mist);color:var(--sky);}
+    .nav-links a.active{background:#e0f2fe;color:var(--sky);font-weight:600;}
+    .btn-dark{background:var(--ink);color:#fff;border:none;padding:8px 18px;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;}
+    body.dark .btn-dark{background:#e0f2fe;color:#0d1b2a;}
+    /* HERO */
+    .page-hero{background:linear-gradient(135deg,#0d1b2a 0%,#164e63 100%);padding:60px 48px;position:relative;overflow:hidden;}
+    .page-hero::before{content:'';position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1400') center/cover;opacity:.15;}
+    .page-hero-inner{max-width:800px;margin:0 auto;text-align:center;position:relative;z-index:1;}
+    .page-tag{display:inline-block;background:rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.4);color:#fcd34d;padding:5px 16px;border-radius:100px;font-size:.78rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;}
+    .page-title{font-family:'Cormorant Garamond',serif;font-size:3.4rem;font-weight:900;color:#fff;line-height:1.1;margin-bottom:12px;}
+    .page-desc{color:#93c5fd;font-size:1rem;line-height:1.7;}
+    /* MAIN */
+    main{max-width:820px;margin:0 auto;padding:60px 24px;}
+    .form-wrap{background:var(--card);border:1px solid var(--border);border-radius:28px;padding:48px;margin-bottom:48px;box-shadow:var(--shadow);}
+    .form-wrap h2{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;margin-bottom:28px;color:var(--ink);}
+    .form-row{display:grid;grid-template-columns:1fr 2fr 1fr;gap:14px;margin-bottom:16px;}
+    .form-group{display:flex;flex-direction:column;gap:6px;}
+    .form-group label{font-size:.78rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.8px;}
+    .form-group input{padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:.95rem;font-family:'Outfit',sans-serif;color:var(--ink);background:var(--card);outline:none;transition:border-color .2s;}
+    .form-group input:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(14,165,233,.12);}
+    .btn-add{background:linear-gradient(135deg,#0891b2,#0ea5e9);color:#fff;border:none;padding:14px;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;width:100%;transition:transform .2s,box-shadow .2s;font-family:'Outfit',sans-serif;}
+    .btn-add:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(8,145,178,.35);}
+    /* ITIN LIST */
+    .itin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+    .itin-header h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:700;}
+    .btn-clear-all{background:#fee2e2;color:#ef4444;border:none;padding:8px 16px;border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer;}
+    .day-group{margin-bottom:32px;}
+    .day-group-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:var(--sky);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+    .day-group-title::after{content:'';flex:1;height:1px;background:var(--border);}
+    .itin-item{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 22px;display:flex;align-items:center;gap:16px;margin-bottom:10px;animation:fadeUp .4s ease both;transition:box-shadow .2s;}
+    .itin-item:hover{box-shadow:var(--shadow);}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+    .itin-num{width:36px;height:36px;background:linear-gradient(135deg,#0ea5e9,#0891b2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#fff;flex-shrink:0;}
+    .itin-content{flex:1;}
+    .itin-content .act{font-weight:600;font-size:1rem;color:var(--ink);}
+    .itin-content .time{color:#64748b;font-size:.82rem;margin-top:2px;}
+    .itin-del{background:#fee2e2;border:none;color:#ef4444;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:1rem;}
+    .empty-state{text-align:center;padding:48px;color:#94a3b8;}
+    .empty-state .icon{font-size:3rem;margin-bottom:12px;}
+    /* FOOTER */
+    footer{background:#0d1b2a;color:#94a3b8;text-align:center;padding:48px 24px;}
+    footer .brand{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:#fff;margin-bottom:8px;font-weight:700;}
+    footer a{color:#7dd3fc;text-decoration:none;}
+    footer p{font-size:.85rem;margin-top:8px;}
+    @media(max-width:700px){nav{padding:0 16px;}.nav-links a{display:none;}.form-row{grid-template-columns:1fr;}.page-title{font-size:2.2rem;}main{padding:32px 16px;}.form-wrap{padding:24px;}}
+  </style>
+</head>
+<body>
+<div id="loader"><div class="ring"></div><div class="loader-title">TravelLoop</div><div class="loader-sub">Building your itinerary…</div></div>
+
+<nav>
+  <a href="index.html" class="nav-brand">✈ TravelLoop</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="planner.html">Planner</a>
+    <a href="itinerary.html" class="active">Itinerary</a>
+    <a href="cities.html">Cities</a>
+    <a href="budget.html">Budget</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="notes.html">Notes</a>
+    <button class="btn-dark" onclick="toggleDark()">🌙 Dark</button>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-tag">✦ Itinerary Builder</div>
+    <h1 class="page-title">Plan Day by Day</h1>
+    <p class="page-desc">Schedule your activities, time slots, and plans for every day of your trip.</p>
+  </div>
+</div>
+
+<main>
+  <div class="form-wrap">
+    <h2>📅 Add Activity</h2>
+    <div class="form-row">
+      <div class="form-group"><label>Day</label><input id="itinDay" type="text" placeholder="Day 1"/></div>
+      <div class="form-group"><label>Activity / Plan</label><input id="itinActivity" type="text" placeholder="e.g. Visit Amber Fort, Lunch at Lakeside"/></div>
+      <div class="form-group"><label>Time</label><input id="itinTime" type="text" placeholder="9:00 AM"/></div>
+    </div>
+    <button class="btn-add" onclick="addItem()">+ Add to Itinerary</button>
+  </div>
+
+  <div class="itin-header">
+    <h2>Your Itinerary</h2>
+    <button class="btn-clear-all" onclick="clearAll()">🗑 Clear All</button>
+  </div>
+  <div id="itinList"></div>
+</main>
+
+<footer>
+  <div class="brand">✈ TravelLoop</div>
+  <p><a href="index.html">Home</a> · <a href="planner.html">Planner</a> · <a href="itinerary.html">Itinerary</a> · <a href="cities.html">Cities</a> · <a href="budget.html">Budget</a> · <a href="gallery.html">Gallery</a> · <a href="notes.html">Notes</a></p>
+  <p style="margin-top:16px;">© 2026 TravelLoop. All Rights Reserved.</p>
+</footer>
+
+<script>
+  window.addEventListener('load',()=>{setTimeout(()=>{const l=document.getElementById('loader');l.classList.add('hide');setTimeout(()=>l.remove(),700);},1400);});
+  function toggleDark(){document.body.classList.toggle('dark');localStorage.setItem('tl-dark',document.body.classList.contains('dark'));}
+  if(localStorage.getItem('tl-dark')==='true')document.body.classList.add('dark');
+
+  let items=JSON.parse(localStorage.getItem('tl-itin')||'[]');
+  function save(){localStorage.setItem('tl-itin',JSON.stringify(items));}
+
+  function render(){
+    const el=document.getElementById('itinList');
+    if(!items.length){el.innerHTML='<div class="empty-state"><div class="icon">📅</div><p>No activities yet. Add your first plan above!</p></div>';return;}
+    // group by day
+    const groups={};
+    items.forEach((item,i)=>{(groups[item.day]=groups[item.day]||[]).push({...item,_i:i});});
+    el.innerHTML=Object.keys(groups).map(day=>`
+      <div class="day-group">
+        <div class="day-group-title">${day}</div>
+        ${groups[day].map((item,j)=>`
+          <div class="itin-item" style="animation-delay:${j*.06}s">
+            <div class="itin-num">${j+1}</div>
+            <div class="itin-content">
+              <div class="act">${item.activity}</div>
+              ${item.time?`<div class="time">🕐 ${item.time}</div>`:''}
+            </div>
+            <button class="itin-del" onclick="deleteItem(${item._i})">✕</button>
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+  }
+
+  function addItem(){
+    const day=document.getElementById('itinDay').value.trim();
+    const act=document.getElementById('itinActivity').value.trim();
+    const time=document.getElementById('itinTime').value.trim();
+    if(!day||!act){alert('Please enter a day and activity.');return;}
+    items.push({day,activity:act,time});
+    save();render();
+    ['itinDay','itinActivity','itinTime'].forEach(id=>document.getElementById(id).value='');
+  }
+
+  function deleteItem(i){items.splice(i,1);save();render();}
+  function clearAll(){if(confirm('Clear all itinerary items?')){items=[];save();render();}}
+
+  render();
+</script>
+</body>
+</html>
