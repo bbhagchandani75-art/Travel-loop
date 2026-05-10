@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>TravelLoop — Travel Gallery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--ink:#0d1b2a;--sky:#0ea5e9;--gold:#f59e0b;--mist:#f0f9ff;--card:#ffffff;--border:#e0f2fe;--shadow:0 8px 40px rgba(14,165,233,.12);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Outfit',sans-serif;background:var(--mist);color:var(--ink);transition:background .3s,color .3s;}
+    body.dark{--mist:#060e1a;--card:#0d1b2a;--ink:#e2e8f0;--border:#1e3a5f;}
+    body.dark nav{background:#060e1a!important;border-color:#1e3a5f!important;}
+    body.dark footer{background:#040b14;}
+    body.dark .filter-btn{background:#0d1b2a;border-color:#1e3a5f;color:#e2e8f0;}
+    body.dark .filter-btn.active{background:var(--sky);color:#fff;border-color:var(--sky);}
+    /* LOADER */
+    #loader{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0d1b2a,#3b0764);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .7s;}
+    #loader.hide{opacity:0;pointer-events:none;}
+    .ring{width:64px;height:64px;border:4px solid rgba(255,255,255,.15);border-top-color:#a78bfa;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:20px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .loader-title{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:700;color:#fff;}
+    .loader-sub{color:#c4b5fd;margin-top:8px;font-size:.95rem;}
+    /* NAV */
+    nav{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid var(--border);padding:0 48px;height:68px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 20px rgba(14,165,233,.07);}
+    .nav-brand{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:700;color:var(--sky);text-decoration:none;}
+    .nav-links{display:flex;align-items:center;gap:6px;}
+    .nav-links a{color:var(--ink);text-decoration:none;padding:8px 14px;border-radius:10px;font-size:.92rem;font-weight:500;transition:background .2s,color .2s;}
+    .nav-links a:hover{background:var(--mist);color:var(--sky);}
+    .nav-links a.active{background:#e0f2fe;color:var(--sky);font-weight:600;}
+    .btn-dark{background:var(--ink);color:#fff;border:none;padding:8px 18px;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;}
+    body.dark .btn-dark{background:#e0f2fe;color:#0d1b2a;}
+    /* HERO */
+    .page-hero{background:linear-gradient(135deg,#0d1b2a 0%,#3b0764 100%);padding:60px 48px;position:relative;overflow:hidden;}
+    .page-hero::before{content:'';position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1400') center/cover;opacity:.2;}
+    .page-hero-inner{max-width:800px;margin:0 auto;text-align:center;position:relative;z-index:1;}
+    .page-tag{display:inline-block;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.4);color:#c4b5fd;padding:5px 16px;border-radius:100px;font-size:.78rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;}
+    .page-title{font-family:'Cormorant Garamond',serif;font-size:3.4rem;font-weight:900;color:#fff;line-height:1.1;margin-bottom:12px;}
+    .page-desc{color:#c4b5fd;font-size:1rem;line-height:1.7;}
+    /* FILTERS */
+    .filters{padding:32px 48px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;max-width:900px;margin:0 auto;}
+    .filter-btn{background:var(--card);border:1.5px solid var(--border);border-radius:100px;padding:8px 20px;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif;color:var(--ink);}
+    .filter-btn:hover,.filter-btn.active{background:var(--sky);color:#fff;border-color:var(--sky);}
+    /* GALLERY GRID */
+    .gallery-wrap{max-width:1200px;margin:0 auto;padding:0 32px 80px;}
+    .masonry{columns:3;gap:20px;}
+    @media(max-width:900px){.masonry{columns:2;}}
+    @media(max-width:600px){.masonry{columns:1;}}
+    .gallery-item{break-inside:avoid;margin-bottom:20px;border-radius:18px;overflow:hidden;position:relative;cursor:pointer;animation:fadeIn .5s ease both;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+    .gallery-item img{width:100%;display:block;transition:transform .4s;}
+    .gallery-item:hover img{transform:scale(1.04);}
+    .gallery-item-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.65),transparent);opacity:0;transition:opacity .3s;}
+    .gallery-item:hover .gallery-item-overlay{opacity:1;}
+    .gallery-item-info{position:absolute;bottom:0;left:0;right:0;padding:20px;transform:translateY(100%);transition:transform .3s;color:#fff;}
+    .gallery-item:hover .gallery-item-info{transform:translateY(0);}
+    .gallery-item-info h4{font-size:1rem;font-weight:700;}
+    .gallery-item-info span{font-size:.8rem;opacity:.85;}
+    /* LIGHTBOX */
+    #lightbox{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;flex-direction:column;}
+    #lightbox.show{display:flex;}
+    #lightbox img{max-width:90vw;max-height:80vh;border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.5);}
+    .lb-title{color:#fff;margin-top:16px;font-size:1rem;font-weight:600;}
+    .lb-close{position:absolute;top:24px;right:32px;background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:1.4rem;cursor:pointer;line-height:44px;text-align:center;}
+    .lb-close:hover{background:rgba(255,255,255,.25);}
+    .lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;width:48px;height:48px;border-radius:50%;font-size:1.4rem;cursor:pointer;}
+    .lb-nav:hover{background:rgba(255,255,255,.25);}
+    #lb-prev{left:24px;}#lb-next{right:24px;}
+    /* FOOTER */
+    footer{background:#0d1b2a;color:#94a3b8;text-align:center;padding:48px 24px;}
+    footer .brand{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:#fff;margin-bottom:8px;font-weight:700;}
+    footer a{color:#7dd3fc;text-decoration:none;}
+    footer p{font-size:.85rem;margin-top:8px;}
+    @media(max-width:700px){nav{padding:0 16px;}.nav-links a{display:none;}.page-title{font-size:2.2rem;}.filters{padding:20px;}.gallery-wrap{padding:0 16px 60px;}}
+  </style>
+</head>
+<body>
+<div id="loader"><div class="ring"></div><div class="loader-title">TravelLoop</div><div class="loader-sub">Curating your gallery…</div></div>
+
+<div id="lightbox">
+  <button class="lb-close" onclick="closeLB()">✕</button>
+  <button class="lb-nav" id="lb-prev" onclick="lbNav(-1)">‹</button>
+  <img id="lb-img" src="" alt=""/>
+  <div class="lb-title" id="lb-title"></div>
+  <button class="lb-nav" id="lb-next" onclick="lbNav(1)">›</button>
+</div>
+
+<nav>
+  <a href="index.html" class="nav-brand">✈ TravelLoop</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="planner.html">Planner</a>
+    <a href="itinerary.html">Itinerary</a>
+    <a href="cities.html">Cities</a>
+    <a href="budget.html">Budget</a>
+    <a href="gallery.html" class="active">Gallery</a>
+    <a href="notes.html">Notes</a>
+    <button class="btn-dark" onclick="toggleDark()">🌙 Dark</button>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-tag">✦ Travel Gallery</div>
+    <h1 class="page-title">Inspire Your<br/>Next Adventure</h1>
+    <p class="page-desc">A curated visual journey through the world's most breathtaking destinations.</p>
+  </div>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="filter('all',this)">All</button>
+  <button class="filter-btn" onclick="filter('beach',this)">🏖️ Beach</button>
+  <button class="filter-btn" onclick="filter('mountain',this)">🏔️ Mountain</button>
+  <button class="filter-btn" onclick="filter('city',this)">🌆 City</button>
+  <button class="filter-btn" onclick="filter('nature',this)">🌿 Nature</button>
+  <button class="filter-btn" onclick="filter('luxury',this)">✨ Luxury</button>
+</div>
+
+<div class="gallery-wrap">
+  <div class="masonry" id="gallery"></div>
+</div>
+
+<footer>
+  <div class="brand">✈ TravelLoop</div>
+  <p><a href="index.html">Home</a> · <a href="planner.html">Planner</a> · <a href="itinerary.html">Itinerary</a> · <a href="cities.html">Cities</a> · <a href="budget.html">Budget</a> · <a href="gallery.html">Gallery</a> · <a href="notes.html">Notes</a></p>
+  <p style="margin-top:16px;">© 2026 TravelLoop. All Rights Reserved.</p>
+</footer>
+
+<script>
+  window.addEventListener('load',()=>{setTimeout(()=>{const l=document.getElementById('loader');l.classList.add('hide');setTimeout(()=>l.remove(),700);},1400);});
+  function toggleDark(){document.body.classList.toggle('dark');localStorage.setItem('tl-dark',document.body.classList.contains('dark'));}
+  if(localStorage.getItem('tl-dark')==='true')document.body.classList.add('dark');
+
+  const photos=[
+    {src:'https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=800',title:'Maldives Overwater Villa',cat:'beach,luxury'},
+    {src:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',title:'Tropical Beach Sunrise',cat:'beach,nature'},
+    {src:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',title:'Swiss Alps',cat:'mountain,nature'},
+    {src:'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800',title:'Mountain Lake Reflection',cat:'mountain,nature'},
+    {src:'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800',title:'Tokyo Cityscape',cat:'city'},
+    {src:'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800',title:'Paris Rooftops',cat:'city'},
+    {src:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800',title:'Dubai Skyline',cat:'city,luxury'},
+    {src:'https://images.unsplash.com/photo-1493558103817-58b2924bce98?w=800',title:'Tropical Paradise',cat:'beach,nature'},
+    {src:'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800',title:'Canyon River Valley',cat:'nature,mountain'},
+    {src:'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800',title:'Jaipur Palace',cat:'city'},
+    {src:'https://images.unsplash.com/photo-1563492065599-3520f775eeed?w=800',title:'Bangkok Temple',cat:'city'},
+    {src:'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800',title:'Bali Rice Fields',cat:'nature,beach'},
+    {src:'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800',title:'Luxury Pool Villa',cat:'luxury'},
+    {src:'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800',title:'Singapore Night',cat:'city'},
+    {src:'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800',title:'London at Twilight',cat:'city'},
+    {src:'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800',title:'Manali Snow Peaks',cat:'mountain'},
+    {src:'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800',title:'Luxury Resort Pool',cat:'luxury,beach'},
+    {src:'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800',title:'Goa Coastline',cat:'beach'},
+  ];
+
+  let lbIdx=0,filteredPhotos=photos;
+
+  function filter(cat,btn){
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    filteredPhotos=cat==='all'?photos:photos.filter(p=>p.cat.includes(cat));
+    renderGallery();
+  }
+
+  function renderGallery(){
+    document.getElementById('gallery').innerHTML=filteredPhotos.map((p,i)=>`
+      <div class="gallery-item" style="animation-delay:${i*.04}s" onclick="openLB(${i})">
+        <img src="${p.src}" alt="${p.title}" loading="lazy"/>
+        <div class="gallery-item-overlay"></div>
+        <div class="gallery-item-info"><h4>${p.title}</h4><span>Click to enlarge</span></div>
+      </div>
+    `).join('');
+  }
+
+  function openLB(i){
+    lbIdx=i;
+    document.getElementById('lb-img').src=filteredPhotos[i].src;
+    document.getElementById('lb-title').textContent=filteredPhotos[i].title;
+    document.getElementById('lightbox').classList.add('show');
+  }
+  function closeLB(){document.getElementById('lightbox').classList.remove('show');}
+  function lbNav(dir){
+    lbIdx=(lbIdx+dir+filteredPhotos.length)%filteredPhotos.length;
+    document.getElementById('lb-img').src=filteredPhotos[lbIdx].src;
+    document.getElementById('lb-title').textContent=filteredPhotos[lbIdx].title;
+  }
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape')closeLB();
+    if(e.key==='ArrowLeft')lbNav(-1);
+    if(e.key==='ArrowRight')lbNav(1);
+  });
+
+  renderGallery();
+</script>
+</body>
+</html>
